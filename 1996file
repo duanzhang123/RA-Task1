@@ -1,0 +1,88 @@
+search_text1 = "COUNTY OR COUNTY EQUIVALENT"
+search_text2 = "TRACT "
+search_text3 = "TRACT"
+replace_text = ""
+  
+# Opening our text file in read only mode using the open() function 
+with open(r'rawText1996.txt', 'r') as file: 
+    data = file.read() 
+    # Searching and replacing the text 
+    data = data.replace(search_text1, replace_text) 
+    data = data.replace(search_text2, replace_text)
+    data = data.replace(search_text3, replace_text)
+
+with open(r'rawText1996 copy.txt', 'w') as file: 
+    file.write(data) 
+import re
+file = open('rawText1996 copy.txt')
+
+#form a list of lines from the file
+line_list = file.readlines()
+line_list = [
+    item.replace('\n', '')
+    for item in line_list
+]
+
+#delete some lines
+for line in line_list:
+    if 'IRS SECTION' in line:
+        del line_list[line_list.index(line)]
+    if line == '' or line == ' ' or line=='  ':
+        del line_list[line_list.index(line)]
+    if line == '60':
+        del line_list[line_list.index(line)]
+    if line == 'NO':
+        del line_list[line_list.index(line)]
+    if line == 'No':
+        del line_list[line_list.index(line)]
+    if line == '60,':
+        del line_list[line_list.index(line)]
+    if line == '83':
+        del line_list[line_list.index(line)]
+
+#find indexes for lines that has info for areas and counties
+area_index_list = []
+county_index_list = []
+for idx,line in enumerate(line_list):   #start=0
+    if ',' in line or ":" in line or "-" in line:
+        area_list.append(line)
+        area_index_list.append(idx)
+for idx,line in enumerate(line_list):   #start=0
+    if 'County' in line or 'Parish' in line or 'City' in line or 'city' in line or 'Borough' in line:
+        county_list.append(line)
+        county_index_list.append(idx)
+
+#form the temp data
+import numpy as np
+tract = []
+county = []
+area = []
+for idx,line in enumerate(line_list):
+    if idx not in area_index_list and idx not in county_index_list:
+        area_index = np.array(area_index_list)[np.array(area_index_list) < idx].max()  
+        county_index = np.array(county_index_list)[np.array(county_index_list) < idx].max()  
+        tract.append(line)
+        county.append(line_list[county_index])
+        area.append(line_list[area_index])
+
+#make it panel data
+area_final = []
+county_final = []
+tract_final = []
+for idx,line in enumerate(tract):
+    index = idx
+    tract_list = line.split()
+    for tracts in tract_list:
+        area_final.append(area[index])
+        county_final.append(county[index])
+        tract_final.append(tracts)
+
+import pandas as pd 
+
+dict = {'area':area_final, 'county': county_final, 'tract': tract_final} 
+    
+df = pd.DataFrame(dict)
+
+df.to_excel('1996panal.xlsx')
+
+
