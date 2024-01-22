@@ -1,0 +1,95 @@
+#import file and replace some text
+search_text = "TRACT"
+replace_text = ""
+
+with open(r'rawText1999b.txt', 'r') as file: 
+    data = file.read() 
+    data = data.replace(search_text, replace_text) 
+#store it in a copy file
+with open(r'rawText1999b copy.txt', 'w') as file: 
+    file.write(data) 
+import re
+file = open('rawText1999b copy.txt')
+
+#form a list of lines from the file
+line_list = file.readlines()
+line_list = [
+    item.replace('\n', '')
+    for item in line_list
+]
+
+#delete some lines
+for line in line_list:
+    if line == 'IRS SECTION 42(D)(5)(C) METROPOLITAN QUALIFIED CENSUS S (1990 DATA, MSA/PMSA DEFINITIONS JUNE 23, 1998)':
+        del line_list[line_list.index(line)]
+    if line in ('' , ' ' , '  ' , '           ' , '           ' , '           '):
+        del line_list[line_list.index(line)]
+    if line == '60':
+        del line_list[line_list.index(line)]
+    if line == 'NO' or line == 'No' or line == "No ":
+        del line_list[line_list.index(line)]
+    if line == '60,' or line =='63,':
+        del line_list[line_list.index(line)]
+    if line == '83':
+        del line_list[line_list.index(line)]
+    if line == 'COUNTY OR COUNTY EQUIVALENT':
+        del line_list[line_list.index(line)]
+    if line == 'MUNICIPO':
+        del line_list[line_list.index(line)]
+
+
+#store indexes location for lines with area and county info
+area_index_list = []
+county_index_list = []
+for idx,line in enumerate(line_list):   #start=0
+    if 'METROPOLITAN AREA' in line or "STATE" in line or 'ISLANDS' in line:
+        area_list.append(line)
+        area_index_list.append(idx)
+for idx,line in enumerate(line_list):   #start=0
+    if 'County' in line or 'Island' in line or 'District' in line or 'State' in line or 'Municipality' in line or 'Guam' in line:
+        county_list.append(line)
+        county_index_list.append(idx)
+
+for idx,line in enumerate(line_list):
+    if 'METROPOLITAN AREA: ' in line:
+        line_list[idx] = line.replace('METROPOLITAN AREA: ', "")
+    elif 'METROPOLITAN AREA:' in line:
+        line_list[idx] = line.replace('METROPOLITAN AREA:', "")
+    elif 'STATE: ' in line:
+        line_list[idx] = line.replace('STATE: ', "") 
+    elif 'STATE:' in line:
+        line_list[idx] = line.replace('STATE:', "")  
+
+#form a temporary dataset
+import numpy as np
+tract = []
+county = []
+area = []
+for idx,line in enumerate(line_list):
+    if idx not in area_index_list and idx not in county_index_list:
+        area_index = np.array(area_index_list)[np.array(area_index_list) < idx].max()  
+        county_index = np.array(county_index_list)[np.array(county_index_list) < idx].max()  
+        tract.append(line)
+        county.append(line_list[county_index])
+        area.append(line_list[area_index])
+
+#make it panel data
+area_final = []
+county_final = []
+tract_final = []
+for idx,line in enumerate(tract):
+    index = idx
+    tract_list = line.split()
+    for tracts in tract_list:
+        area_final.append(area[index])
+        county_final.append(county[index])
+        tract_final.append(tracts)
+
+import pandas as pd 
+
+# dictionary of lists 
+dict = {'area':area_final, 'county': county_final, 'tract': tract_final} 
+df = pd.DataFrame(dict)
+df.head(10)
+
+df.to_excel('1999b_panal.xlsx')
