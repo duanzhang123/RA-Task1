@@ -45,11 +45,9 @@ area_index_list = []
 county_index_list = []
 for idx,line in enumerate(line_list):   #start=0
     if ',' in line or ":" in line or "-" in line:
-        area_list.append(line)
         area_index_list.append(idx)
 for idx,line in enumerate(line_list):   #start=0
     if 'County' in line or 'Parish' in line or 'City' in line or 'city' in line or 'Borough' in line:
-        county_list.append(line)
         county_index_list.append(idx)
 
 #form the temp data
