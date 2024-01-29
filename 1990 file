@@ -1,0 +1,165 @@
+# -*- coding: utf-8 -*-
+"""
+Spyder Editor
+
+This is a temporary script file.
+"""
+#%%
+file = open('rawText1990.txt')
+#form a list of lines from the file
+old_line_list = file.readlines()
+old_line_list = [
+    item.replace('\n', '')
+    for item in old_line_list
+]
+#%%
+#find index for areas
+area_list = []
+area_index_list = []
+for idx,line in enumerate(old_line_list):   #start=0
+     if ':' in line:
+          area_index_list.append(idx)
+          area_list.append(line)
+#find index for "PERCENT"
+percent_list = []
+percent_index_list = []
+for idx,line in enumerate(old_line_list):   #start=0
+    if 'PERCENT' in line:
+        percent_index_list.append(idx)
+        percent_list.append(line)
+#delet lines in between
+import numpy as np
+delect_list=[]
+delect_index_list=[]
+#fine the closet area line for each percent line
+for idx_percent in percent_index_list:
+    if idx_percent < np.array(area_index_list).max():
+        #find index for the area line right after an percent line
+        idx_area = np.array(area_index_list)[np.array(area_index_list) > idx_percent].min()
+        if idx_percent+1<idx_area:
+            while(idx_percent+1<idx_area):
+                delect_list.append(old_line_list[idx_percent+1])
+                delect_index_list.append(idx_percent+1)
+                idx_percent += 1
+#%%
+line_list=[]
+for idx,line in enumerate(old_line_list):
+    if idx not in delect_index_list:
+        line_list.append(line)
+
+#%%
+#delete some lines
+for line in line_list:
+    if "POP" in line:
+        del line_list[line_list.index(line)]
+    if "POR" in line:
+        del line_list[line_list.index(line)]
+    if line == "STATE AND COUNTY":
+        del line_list[line_list.index(line)]
+        del line_list[line_list.index(line)]
+    if line == "":
+        del line_list[line_list.index(line)]
+    if "No." in line:
+        del line_list[line_list.index(line)]
+    if line == 'Register':
+        del line_list[line_list.index(line)]
+    if "August" in line:
+        del line_list[line_list.index(line)]
+    if "Wednesday" in line:
+        del line_list[line_list.index(line)]
+for line in line_list:
+    if line == "TRACT":
+        del line_list[line_list.index(line)]
+for line in line_list:
+    if 'TABLE' in line:
+        del line_list[line_list.index(line)]
+for line in line_list:
+    if 'Vol' in line:
+        del line_list[line_list.index(line)]
+    if 'PERCENT' in line:
+        del line_list[line_list.index(line)]
+
+
+
+#%%
+with open(r'rawText1990_intermediate.txt', 'w') as file: 
+    for line in line_list:
+        file.write(f'{line}\n')
+#manually deleted lines for last page that are not supposed to be in the data
+#%%
+file = open('rawText1990_intermediate.txt')
+#form a list of lines from the file
+line_list = file.readlines()
+line_list = [
+    item.replace('\n', '')
+    for item in line_list
+]
+#store indexes location for lines with area and county info
+area_list = []
+county_list = []
+area_index_list = []
+county_index_list = []
+#find area first
+for idx,line in enumerate(line_list):   #start=0
+    if ':' in line:
+        area_index_list.append(idx)
+        area_list.append(line)
+for idx,line in enumerate(line_list):   #start=0
+    if " " in line and idx not in area_index_list:
+        county_index_list.append(idx)
+        county_list.append(line)
+        
+#%%
+#form the panal
+import numpy as np
+tract = []
+county = []
+area = []
+pop = []
+for idx,idx_county in enumerate(county_index_list):
+    area_index = np.array(area_index_list)[np.array(area_index_list) < idx_county].max()
+    if area_index < np.array(area_index_list).max():
+        area_index_next = np.array(area_index_list)[np.array(area_index_list) > idx_county].min()
+        idx_county1 = idx_county
+        idx_break = np.array([county_index_list[idx+1],area_index_next]).min()
+        while (idx_county1+1<idx_break):
+            if ((idx_county1+1)-idx_county)%2 != 0:
+                tract.append(line_list[idx_county1+1])
+                pop.append(line_list[idx_county1+2])
+                county.append(line_list[idx_county])
+                area.append(line_list[area_index])
+            idx_county1 += 1
+    else:
+        if idx_county<np.array(county_index_list).max():#if it's not the last county in the file        
+            while (idx_county1+1<county_index_list[idx+1]):
+                    if ((idx_county1+1)-idx_county)%2 != 0:
+                        tract.append(line_list[idx_county1+1])
+                        pop.append(line_list[idx_county1+2])
+                        county.append(line_list[idx_county])
+                        area.append(line_list[area_index])
+                    idx_county1 += 1
+        else:
+            idx_county1 = idx_county
+            while (idx_county1+1<len(line_list)):
+                if ((idx_county1+1)-idx_county)%2 != 0:
+                    tract.append(line_list[idx_county1+1])
+                    pop.append(line_list[idx_county1+2])
+                    county.append(line_list[idx_county])
+                    area.append(line_list[area_index])
+                idx_county1 += 1
+
+#%%
+import pandas as pd 
+
+dict = {'area':area, 'county': county, 'tract': tract, 'pop':pop} 
+    
+df = pd.DataFrame(dict)  
+    
+#%%
+df.to_excel('1990panal.xlsx')
+
+
+
+
+
+
