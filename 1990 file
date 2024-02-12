@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Spyder Editor
-
-This is a temporary script file.
-"""
 #%%
 file = open('rawText1990.txt')
 #form a list of lines from the file
