@@ -1,0 +1,40 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Feb 12 13:10:32 2024
+
+@author: duanzhang
+"""
+##this file matches state and county name in 1990s file with fips codes
+
+#%%
+import pandas as pd
+import os
+df = pd.read_excel(os.path.join(os.path.dirname(__file__), r"clean_extractdata_1990s.xlsx"),
+                   dtype={'file':'string','state':'string','geography':'string','tract':'string'})
+#%%
+df1990 = df[df['file']=="1990"]
+df1996 = df[df['file']=="1996"]
+df1999 = df[(df['file']=="1999a") | (df['file']=="1999b")]
+df2000 = df[df['file']=="2000"]
+#%%
+df1990[['state1','state2']] = df1990['state'].str.split(', ',n=1, expand=True)
+df1990[['state1','state3']] = df1990['state'].str.split('.',n=1, expand=True)
+#%%
+def f(row):
+    if pd.notna(row['state2']):
+        val = row['state2']
+    elif pd.notna(row['state3']):
+        val = row['state3']
+    else:
+        val = row['state1']
+    return val
+df1990['state only'] = df1990[['state1','state2','state3']].apply(f, axis=1)
+#%%
+#%%
+#match 1990 with fips
+##some are state names, some are city names with state abreviation
+state1990
+import addfips
+af = addfips.AddFIPS()
+af.add_county_fips(df1990, county_field="geograoy", state_field=("state only"))p
