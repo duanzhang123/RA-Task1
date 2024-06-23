@@ -1,0 +1,52 @@
+###some examples
+###################################################################################################################
+#batch download from web
+import requests
+import pandas as pd
+import os
+path="/Users/duanzhang/Dropbox/CJhousing/HUDwaitlists/data/raw_data/LAUS"
+os.chdir(path)
+
+def download_file(url,headers,output_name):
+    response = requests.get(url, headers=headers)
+    if response.status_code!=200:
+        print("error from getting data from api")
+    else:
+        output = open(output_name,"wb")
+        output.write(response.content)
+        output.close()
+
+headers = {'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36'}#user-agent
+for year in range(1990,2024):
+    y = str(year)[-2:]
+    url = f"https://www.bls.gov/lau/laucnty{y}.xlsx"
+    output_name = f"unemplyment{y}.xlsx"
+    download_file(url,headers,output_name)
+##########################################################################################################################################
+#extract data from API
+import requests
+import pandas as pd
+
+def get_query_data(query_url):
+    response = requests.get(query_url)
+    if response.status_code!=200:
+        print("error from getting data from api")
+    else:
+        data = pd.DataFrame (response.json())
+        data.columns=data.iloc[0]
+        data=data[1:]
+    return data
+
+#data is from census SAIPE API
+#poverty rate: SAEPOVRTALL_PT	All ages in Poverty, Rate Estimate
+#median income: SAEMHI_PT	Median Household Income Estimate
+
+url='https://api.census.gov/data/timeseries/poverty/saipe?get=YEAR,SAEMHI_PT,SAEPOVRTALL_PT&for=county:*'
+df=get_query_data(url)
+
+import os
+path="/Users/duanzhang/Dropbox/CJhousing/HUDwaitlists/data/raw_data/SAIPE"
+os.chdir(path)
+df.to_csv('poverty_medianinc_1989_2022.csv', header=True, index=False)
+
+##########################################################################################################################################
